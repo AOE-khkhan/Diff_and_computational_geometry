@@ -16,7 +16,8 @@ from sympy.parsing.sympy_parser import parse_expr
 from sympy.utilities import lambdify
 
 PARAM = 't'
-
+EPS = 0.01
+PI = np.pi
 
 class Curve3D:
     def __init__(self, x_func: str, y_func: str, z_func: str, t_range: tuple, param=PARAM):
@@ -171,9 +172,10 @@ class Curve3D:
 
 # testing
 if __name__ == '__main__':
-    curve = Curve3D('t', 't**2', 't**3', (0, 5))
-    tangent_vector = curve.tangent_vector(1, plot=True)
-    normal_vector = curve.normal_vector(1, plot=True)
-    binormal_vector = curve.binormal_vector(1, plot=True)
-    curve.plot(neighborhood=(0, 2))
-    # print(tangent_vector)
+    curve = Curve3D('sin(t)', 'cos(t)', 'tan(t)', (0, 5))
+    point = PI / 4
+    tangent_vector = curve.tangent_vector(point, plot=True)
+    normal_vector = curve.normal_vector(point, plot=True)
+    binormal_vector = curve.binormal_vector(point, plot=True)
+    curve.plot(neighborhood=(EPS-PI/2, PI/2-EPS))
+    print(tangent_vector, normal_vector, binormal_vector)
