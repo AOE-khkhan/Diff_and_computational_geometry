@@ -55,15 +55,15 @@ class Curve3D:
             assert len(neighborhood) == 2 and \
                    isinstance(neighborhood[0], (float, int)) and \
                    isinstance(neighborhood[1], (float, int)), 'neighborhood must contain two numbers'
-            t = np.linspace(neighborhood[0], neighborhood[1], 1000)
+            t = np.linspace(neighborhood[0], neighborhood[1], num)
         x = self._x(t)
         y = self._y(t)
         z = self._z(t)
 
-        self._ax.plot(x, y, z, label='r({t}) = ({x}, {y}, {z})'.format(t=self._t,
-                                                                       x=self._x_func,
-                                                                       y=self._y_func,
-                                                                       z=self._z_func))
+        self._ax.plot3D(x, y, z, label='r({t}) = ({x}, {y}, {z})'.format(t=self._t,
+                                                                         x=self._x_func,
+                                                                         y=self._y_func,
+                                                                         z=self._z_func))
         self._ax.legend()
         set_axes_equal(self._ax)
         plt.show()
@@ -104,7 +104,8 @@ class Curve3D:
             self._plt_vector(origin, vector, color='b')
         return vector
 
-    def tangent_plane(self, t: float) -> Expr:
+    # стична площина
+    def osculating_plane(self, t: float) -> Expr:
         """ Tangent plane to the curve at point t. """
         self._validate_t(t)
         r_der = self._get_derivative(t)
@@ -112,15 +113,23 @@ class Curve3D:
         p = self._at_point(t)
         return Curve3D._find_plane(p, r_der, r_der_2)
 
+    # нормальна
     def normal_plane(self, t: float) -> Expr:
         """ Normal plane at point t. """
         self._validate_t(t)
-        pass
+        beta = self.binormal_vector(t)
+        nu = self.normal_vector(t)
+        p = self._at_point(t)
+        return Curve3D._find_plane(p, nu, beta)
 
-    def binormal_plane(self, t: float) -> Expr:
+    # спрямна
+    def reference_plane(self, t: float) -> Expr:
         """ Binormal plane at point t. """
         self._validate_t(t)
-        pass
+        beta = self.binormal_vector(t)
+        tau = self.tangent_vector(t)
+        p = self._at_point(t)
+        return Curve3D._find_plane(p, tau, beta)
 
     def curvature(self, t: float):
         """ Curvature at point t – the amount by which a curve deviates from being a straight line. """
