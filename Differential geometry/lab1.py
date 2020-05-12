@@ -19,6 +19,7 @@ PARAM = 't'
 EPS = 0.01
 PI = np.pi
 
+
 class Curve3D:
     def __init__(self, x_func: str, y_func: str, z_func: str, t_range: tuple, param=PARAM):
         """
@@ -64,40 +65,43 @@ class Curve3D:
                                                                        y=self._y_func,
                                                                        z=self._z_func))
         self._ax.legend()
+        set_axes_equal(self._ax)
         plt.show()
 
-    def tangent_vector(self, t: float, plot=False):
+    def tangent_vector(self, t: float, plot=False) -> np.array:
         """
         T – Unit vector tangent to the curve, pointing in the direction of motion at point t.
         """
+        self._validate_t(t)
         r_der = (float(self._x_func.diff().subs(self._t, t)),
                  float(self._y_func.diff().subs(self._t, t)),
                  float(self._z_func.diff().subs(self._t, t)))
         module = Curve3D._module(r_der)
-        vector = tuple(map(lambda x: x / module, r_der))
+        vector = np.array(list(map(lambda x: x / module, r_der)))
         if plot:
             origin = self._at_point(t)
             self._plt_vector(origin, vector, color='r')
         return vector
 
-    # TODO review
-    def normal_vector(self, t: float, plot=False):
+    def normal_vector(self, t: float, plot=False) -> np.array:
         """
         N - Normal unit vector at point t.
         """
+        self._validate_t(t)
         beta = self.binormal_vector(t)
         tau = self.tangent_vector(t)
+        # nu = [beta, tau]
         nu = np.cross(beta, tau)
         if plot:
             origin = self._at_point(t)
             self._plt_vector(origin, nu, color='g')
         return nu
 
-    # TODO review
-    def binormal_vector(self, t: float, plot=False):
+    def binormal_vector(self, t: float, plot=False) -> np.array:
         """
         B - Binormal unit vector at point t, cross product of T and N.
         """
+        self._validate_t(t)
         r_der = (float(self._x_func.diff().subs(self._t, t)),
                  float(self._y_func.diff().subs(self._t, t)),
                  float(self._z_func.diff().subs(self._t, t)))
@@ -106,7 +110,7 @@ class Curve3D:
                    float(self._z_func.diff().diff().subs(self._t, t)))
         product = np.cross(r_der, r_der_2)
         module = Curve3D._module(product)
-        vector = tuple(map(lambda x: x / module, product))
+        vector = np.array(list(map(lambda x: x / module, product)))
         if plot:
             origin = self._at_point(t)
             self._plt_vector(origin, vector, color='b')
@@ -116,24 +120,28 @@ class Curve3D:
         """
         Tangent plane to the curve at point t.
         """
+        self._validate_t(t)
         pass
 
     def normal_plane(self, t: float):
         """
         Normal plane at point t.
         """
+        self._validate_t(t)
         pass
 
     def binormal_plane(self, t: float):
         """
         Binormal plane at point t.
         """
+        self._validate_t(t)
         pass
 
     def curvature(self, t: float):
         """
         Curvature at point t – the amount by which a curve deviates from being a straight line.
         """
+        self._validate_t(t)
         pass
 
     def torsion(self, t: float):
@@ -142,9 +150,11 @@ class Curve3D:
         :param t:
         :return:
         """
+        self._validate_t(t)
         pass
 
     def adjacent_circle(self, t: float):
+        self._validate_t(t)
         pass
 
     @staticmethod
@@ -165,9 +175,42 @@ class Curve3D:
         self._ax.quiver(x, y, z, u, v, w, color=color)
 
     def _at_point(self, t):
+        self._validate_t(t)
         return (float(self._x_func.subs(self._t, t)),
                 float(self._y_func.subs(self._t, t)),
                 float(self._z_func.subs(self._t, t)))
+
+    def _validate_t(self, t):
+        assert self._t_lower <= t <= self._t_upper, 't not in the t_range'
+
+
+def set_axes_equal(ax):
+    """Make axes of 3D plot have equal scale so that spheres appear as spheres,
+    cubes as cubes, etc..  This is one possible solution to Matplotlib's
+    ax.set_aspect('equal') and ax.axis('equal') not working for 3D.
+
+    Input
+      ax: a matplotlib axis, e.g., as output from plt.gca().
+    """
+
+    x_limits = ax.get_xlim3d()
+    y_limits = ax.get_ylim3d()
+    z_limits = ax.get_zlim3d()
+
+    x_range = abs(x_limits[1] - x_limits[0])
+    x_middle = np.mean(x_limits)
+    y_range = abs(y_limits[1] - y_limits[0])
+    y_middle = np.mean(y_limits)
+    z_range = abs(z_limits[1] - z_limits[0])
+    z_middle = np.mean(z_limits)
+
+    # The plot bounding box is a sphere in the sense of the infinity
+    # norm, hence I call half the max range the plot radius.
+    plot_radius = 0.5*max([x_range, y_range, z_range])
+
+    ax.set_xlim3d([x_middle - plot_radius, x_middle + plot_radius])
+    ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
+    ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
 
 # testing
@@ -177,5 +220,5 @@ if __name__ == '__main__':
     tangent_vector = curve.tangent_vector(point, plot=True)
     normal_vector = curve.normal_vector(point, plot=True)
     binormal_vector = curve.binormal_vector(point, plot=True)
-    curve.plot(neighborhood=(EPS-PI/2, PI/2-EPS))
     print(tangent_vector, normal_vector, binormal_vector)
+    curve.plot(neighborhood=(PI / 12, PI / 3))
