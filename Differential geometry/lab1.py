@@ -134,19 +134,29 @@ class Curve3D:
     def curvature(self, t: float):
         """ Curvature at point t – the amount by which a curve deviates from being a straight line. """
         self._validate_t(t)
-        pass
+        r_der = self._get_derivative(t)
+        r_der_2 = self._get_derivative(t, 2)
+        product = np.cross(r_der, r_der_2)
+        curvature = Curve3D._module(product) / Curve3D._module(r_der)**3
+        return curvature
 
     def torsion(self, t: float):
         """ The torsion of a curve measures how sharply it is twisting out of the plane of curvature. """
         self._validate_t(t)
-        pass
+        r_der = self._get_derivative(t)
+        r_der_2 = self._get_derivative(t, 2)
+        r_der_3 = self._get_derivative(t, 3)
+        numerator = Matrix([r_der, r_der_2, r_der_3]).det()
+        denominator = Curve3D._module(np.cross(r_der, r_der_2))**2
+        torsion = numerator / denominator
+        return torsion
 
     def adjacent_circle(self, t: float):
         self._validate_t(t)
         pass
 
     @staticmethod
-    def _module(vector):
+    def _module(vector) -> float:
         """ Helper method to calculate module of given vector """
         assert len(vector) == 3, 'vector length must be 3'
         module = 0
@@ -162,7 +172,7 @@ class Curve3D:
         x, y, z, u, v, w = zip(*[origin + vector])
         self._ax.quiver(x, y, z, u, v, w, color=color)
 
-    def _at_point(self, t):
+    def _at_point(self, t) -> tuple:
         self._validate_t(t)
         return (float(self._x_func.subs(self._t, t)),
                 float(self._y_func.subs(self._t, t)),
@@ -172,7 +182,7 @@ class Curve3D:
         assert self._t_lower <= t <= self._t_upper, 't not in the t_range'
 
     @staticmethod
-    def _find_plane(p, vector1, vector2):
+    def _find_plane(p, vector1, vector2) -> Expr:
         """ Find plane that fits through point p and two non-collinear vectors """
         x, y, z = symbols('x, y, z')
         xyz = np.array([x, y, z])
@@ -182,7 +192,7 @@ class Curve3D:
             raise AssertionError('vector1 and vector2 must be non-collinear')
         return plane
 
-    def _get_derivative(self, t, order=1):
+    def _get_derivative(self, t, order=1) -> tuple:
         return (float(diff(self._x_func, self._t, order).subs(self._t, t)),
                 float(diff(self._y_func, self._t, order).subs(self._t, t)),
                 float(diff(self._z_func, self._t, order).subs(self._t, t)))
@@ -219,10 +229,17 @@ def set_axes_equal(ax):
 
 # testing
 if __name__ == '__main__':
-    curve = Curve3D('sin(t)', 'cos(t)', 'tan(t)', (0, 5))
-    point = Pi / 4
-    tangent_vector = curve.tangent_vector(point, plot=True)
-    normal_vector = curve.normal_vector(point, plot=True)
-    binormal_vector = curve.binormal_vector(point, plot=True)
-    print(tangent_vector, normal_vector, binormal_vector)
-    curve.plot(neighborhood=(Pi / 12, Pi / 3))
+    # test 1
+    # curve = Curve3D('sin(t)', 'cos(t)', 'tan(t)', (0, 5))
+    # point = Pi / 4
+    # tangent_vector = curve.tangent_vector(point, plot=True)
+    # normal_vector = curve.normal_vector(point, plot=True)
+    # binormal_vector = curve.binormal_vector(point, plot=True)
+    # print(tangent_vector, normal_vector, binormal_vector)
+    # curve.plot(neighborhood=(Pi / 12, Pi / 3))
+
+    # test 2
+    curve2 = Curve3D('2*(t-sin(t))', '2*(t-cos(t))', '8*cos(t/2)', (-Pi, Pi))
+    point2 = 0
+    print(curve2.curvature(point2))
+    print(curve2.torsion(point2))
