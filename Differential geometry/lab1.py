@@ -295,26 +295,26 @@ if __name__ == '__main__':
     # # test 1
     curve = Curve3D('sin(t)', 'cos(t)', 'tan(t)', (0, 5))
     point = Pi / 4
-    # tangent_vector = curve.tangent_vector(point, plot=True)
-    # normal_vector = curve.normal_vector(point, plot=True)
-    # binormal_vector = curve.binormal_vector(point, plot=True)
-    # print(tangent_vector, normal_vector, binormal_vector)
-    # curve.plot(neighborhood=(Pi / 12, Pi / 3))
+    tangent_v = curve.tangent_vector(point, plot=True)
+    normal_v = curve.normal_vector(point, plot=True)
+    binormal_v = curve.binormal_vector(point, plot=True)
+    print(tangent_v, normal_v, binormal_v)
+    curve.plot(neighborhood=(Pi / 12, Pi / 3))
 
     # # test 2
     curve2 = Curve3D('2*(t-sin(t))', '2*(t-cos(t))', '8*cos(t/2)', (-Pi, Pi))
     point2 = 0
-    # print(curve2.curvature(point2))
-    # print(curve2.torsion(point2))
+    print(curve2.curvature(point2))
+    print(curve2.torsion(point2))
 
     # # test 3
     curve3 = Curve3D('t', 't**3', 't**2+1', (0, 2))
     point3 = 1
-    # print('Osculating plane at P({point}): {equation} = 0'.format(point=point3,
-    #                                                               equation=curve3.osculating_plane(point3)))
-    # print('Normal plane at P({point}): {equation} = 0'.format(point=point3,
-    #                                                           equation=curve3.normal_plane(point3)))
-    # print('Reference plane at P({point}): {equation} = 0'.format(point=point3,
-    #                                                              equation=curve3.reference_plane(point3)))
+    print('Osculating plane at P({point}): {equation} = 0'.format(point=point3,
+                                                                  equation=curve3.osculating_plane(point3)))
+    print('Normal plane at P({point}): {equation} = 0'.format(point=point3,
+                                                              equation=curve3.normal_plane(point3)))
+    print('Reference plane at P({point}): {equation} = 0'.format(point=point3,
+                                                                 equation=curve3.reference_plane(point3)))
     # test 4
     print(curve2.osculating_circle(point2))
