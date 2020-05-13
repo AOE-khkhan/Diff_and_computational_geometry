@@ -298,12 +298,11 @@ if __name__ == '__main__':
     # test 1
     curve = Curve3D('sin(t)', 'cos(t)', 'tan(t)', (0, 5))
     point = Pi / 4
-    normal_v = curve.normal_vector(point, plot=True)
-    binormal_v = curve.binormal_vector(point, plot=True)
     print('For curve {} at point {}:'.format(curve, point))
     print('\ttangent unit vector: {}'.format(curve.tangent_vector(point, plot=True)))
     print('\tnormal unit vector: {}'.format(curve.normal_vector(point, plot=True)))
     print('\tbinormal unit vector: {}'.format(curve.binormal_vector(point, plot=True)))
+    curve.plot(neighborhood=(Pi / 12, Pi / 3))
 
     # test 2
     curve2 = Curve3D('2*(t-sin(t))', '2*(t-cos(t))', '8*cos(t/2)', (-Pi, Pi))
@@ -323,6 +322,3 @@ if __name__ == '__main__':
     print('\tosculating plane: {} = 0'.format(curve3.osculating_plane(point3)))
     print('\tnormal plane: {} = 0'.format(curve3.normal_plane(point3)))
     print('\treference plane: {} = 0'.format(curve3.reference_plane(point3)))
-
-    # test 1 - plotting
-    curve.plot(neighborhood=(Pi / 12, Pi / 3))
