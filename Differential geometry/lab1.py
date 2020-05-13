@@ -26,7 +26,12 @@ Pi = np.pi
 
 class Curve3D:
     def __init__(self, x_func: str, y_func: str, z_func: str, t_range: tuple, param=PARAM):
-        """ x_func, y_func, z_func must be with parameter t. """
+        """ Create a 3d curve with r(t) = (x(t), y(t), z(t)) parametrization.
+
+        :params x_func, y_func, z_func: must depend on param (default: t)
+        :param t_range: variability range for parameter
+        :param param: string that represents the functions' parameter
+        """
         assert len(t_range) == 2, 't_range must have len = 2'
         assert isinstance(t_range[0], (float, int)) and isinstance(t_range[1], (float, int)), \
             't_range parameters must be numbers'
@@ -39,6 +44,7 @@ class Curve3D:
         self._y_func = parse_expr(y_func)
         self._z_func = parse_expr(z_func)
 
+        # create vectorized functions for x, y, z
         self._x = lambdify(self._t, self._x_func, 'numpy')
         self._y = lambdify(self._t, self._y_func, 'numpy')
         self._z = lambdify(self._t, self._z_func, 'numpy')
@@ -48,7 +54,11 @@ class Curve3D:
         self._ax = fig.gca(projection='3d')
 
     def plot(self, neighborhood=None, num=1000):
-        """ Plot the curve on graphic. """
+        """ Plot the curve on graphic.
+
+            :param neighborhood: if given, plot in the neighborhood of the point
+            :param num: number of points in linspace, e.g. bigger num -> detailed plot
+        """
         if not neighborhood:
             t = np.linspace(self._t_lower, self._t_upper, num)
         else:
@@ -69,30 +79,44 @@ class Curve3D:
         plt.show()
 
     def tangent_vector(self, t: float, plot=False) -> np.array:
-        """ T – Unit vector tangent to the curve, pointing in the direction of motion at point t. """
+        """ T – Unit vector tangent to the curve, pointing in the direction of motion at point t.
+            T = r'(t) / |r'(t)|
+
+            :param t: given point
+            :param plot: if true - add tangent unit vector to the plot, when self.plot function is called
+        """
         self._validate_t(t)
         r_der = self._get_derivative(t)
         module = Curve3D._module(r_der)
         vector = np.array(list(map(lambda x: x / module, r_der)))
         if plot:
             origin = self._at_point(t)
-            self._plt_vector(origin, vector, color='r')
+            self._plt_vector(origin, vector, color='r', label='tangent unit vector')
         return vector
 
     def normal_vector(self, t: float, plot=False) -> np.array:
-        """ N - Normal unit vector at point t. """
+        """ N - Normal unit vector at point t.
+            N = [beta, tau]
+
+            :param t: given point
+            :param plot: if true - add normal unit vector to the plot, when self.plot function is called
+        """
         self._validate_t(t)
         beta = self.binormal_vector(t)
         tau = self.tangent_vector(t)
-        # nu = [beta, tau]
         nu = np.cross(beta, tau)
         if plot:
             origin = self._at_point(t)
-            self._plt_vector(origin, nu, color='g')
+            self._plt_vector(origin, nu, color='g', label='normal unit vector')
         return nu
 
     def binormal_vector(self, t: float, plot=False) -> np.array:
-        """ B - Binormal unit vector at point t, cross product of T and N. """
+        """ B - Binormal unit vector at point t, cross product of T and N.
+            B = [r'(t), r''(t)] / |[r'(t), r''(t)]|
+
+            :param t: given point
+            :param plot: if true - add binormal unit vector to the plot, when self.plot function is called
+        """
         self._validate_t(t)
         r_der = self._get_derivative(t)
         r_der_2 = self._get_derivative(t, order=2)
@@ -101,12 +125,15 @@ class Curve3D:
         vector = np.array(list(map(lambda x: x / module, product)))
         if plot:
             origin = self._at_point(t)
-            self._plt_vector(origin, vector, color='b')
+            self._plt_vector(origin, vector, color='b', label='binormal unit vector')
         return vector
 
-    # стична площина
+    # стична
     def osculating_plane(self, t: float) -> Expr:
-        """ Tangent plane to the curve at point t. """
+        """ Tangent plane to the curve at point t.
+
+            :param t: given point
+        """
         self._validate_t(t)
         r_der = self._get_derivative(t)
         r_der_2 = self._get_derivative(t, order=2)
@@ -115,7 +142,10 @@ class Curve3D:
 
     # нормальна
     def normal_plane(self, t: float) -> Expr:
-        """ Normal plane at point t. """
+        """ Normal plane at point t.
+
+            :param t: given point
+        """
         self._validate_t(t)
         beta = self.binormal_vector(t)
         nu = self.normal_vector(t)
@@ -124,7 +154,10 @@ class Curve3D:
 
     # спрямна
     def reference_plane(self, t: float) -> Expr:
-        """ Binormal plane at point t. """
+        """ Binormal plane at point t.
+
+            :param t: given point
+        """
         self._validate_t(t)
         beta = self.binormal_vector(t)
         tau = self.tangent_vector(t)
@@ -132,7 +165,11 @@ class Curve3D:
         return Curve3D._find_plane(p, tau, beta)
 
     def curvature(self, t: float):
-        """ Curvature at point t – the amount by which a curve deviates from being a straight line. """
+        """ Curvature at point t – the amount by which a curve deviates from being a straight line.
+            K = |[r'(t), r''(t)]| / |r'(t)|**3
+
+            :param t: given point
+        """
         self._validate_t(t)
         r_der = self._get_derivative(t)
         r_der_2 = self._get_derivative(t, 2)
@@ -141,7 +178,11 @@ class Curve3D:
         return curvature
 
     def torsion(self, t: float):
-        """ The torsion of a curve measures how sharply it is twisting out of the plane of curvature. """
+        """ The torsion of a curve measures how sharply it is twisting out of the plane of curvature.
+            kappa = (r'(t), r''(t), r'''(t)) / |[r'(t), r''(t)]|**2
+
+            :param t: given point
+        """
         self._validate_t(t)
         r_der = self._get_derivative(t)
         r_der_2 = self._get_derivative(t, 2)
@@ -157,22 +198,25 @@ class Curve3D:
 
     @staticmethod
     def _module(vector) -> float:
-        """ Helper method to calculate module of given vector """
+        """ Helper method to calculate module of given vector of numbers"""
         assert len(vector) == 3, 'vector length must be 3'
+        assert all(isinstance(elem, (float, int)) for elem in vector), 'vector elements must be numbers'
         module = 0
         for f in vector:
             module += f**2
         return np.sqrt(module)
 
-    def _plt_vector(self, origin, vector, color='b'):
+    def _plt_vector(self, origin, vector, color='b', label=None):
+        """ Helper method to add vector from origin point to self._ax figure """
         assert len(origin) == 3, 'origin must contain 3 coordinates'
         assert len(vector) == 3, 'vector must contain 3 coordinates'
-        origin = [origin[0]], [origin[1]], [origin[2]]
-        vector = [vector[0]], [vector[1]], [vector[2]]
-        x, y, z, u, v, w = zip(*[origin + vector])
-        self._ax.quiver(x, y, z, u, v, w, color=color)
+        assert all(isinstance(elem, (float, int)) for elem in origin), 'origin elements must be numbers'
+        assert all(isinstance(elem, (float, int)) for elem in vector), 'vector elements must be numbers'
+
+        self._ax.quiver(*origin, *vector, color=color, label=label)
 
     def _at_point(self, t) -> tuple:
+        """ Helper method to calculate r(t) at given point t """
         self._validate_t(t)
         return (float(self._x_func.subs(self._t, t)),
                 float(self._y_func.subs(self._t, t)),
@@ -183,7 +227,7 @@ class Curve3D:
 
     @staticmethod
     def _find_plane(p, vector1, vector2) -> Expr:
-        """ Find plane that fits through point p and two non-collinear vectors """
+        """ Helper method tp find plane that fits point p and two non-collinear vectors """
         x, y, z = symbols('x, y, z')
         xyz = np.array([x, y, z])
         matrix = Matrix([xyz - p, vector1, vector2])
@@ -193,6 +237,7 @@ class Curve3D:
         return plane
 
     def _get_derivative(self, t, order=1) -> tuple:
+        """ Helper method to find order'th derivative of r at given point t"""
         return (float(diff(self._x_func, self._t, order).subs(self._t, t)),
                 float(diff(self._y_func, self._t, order).subs(self._t, t)),
                 float(diff(self._z_func, self._t, order).subs(self._t, t)))
@@ -230,16 +275,20 @@ def set_axes_equal(ax):
 # testing
 if __name__ == '__main__':
     # test 1
-    # curve = Curve3D('sin(t)', 'cos(t)', 'tan(t)', (0, 5))
-    # point = Pi / 4
-    # tangent_vector = curve.tangent_vector(point, plot=True)
-    # normal_vector = curve.normal_vector(point, plot=True)
-    # binormal_vector = curve.binormal_vector(point, plot=True)
-    # print(tangent_vector, normal_vector, binormal_vector)
-    # curve.plot(neighborhood=(Pi / 12, Pi / 3))
+    curve = Curve3D('sin(t)', 'cos(t)', 'tan(t)', (0, 5))
+    point = Pi / 4
+    tangent_vector = curve.tangent_vector(point, plot=True)
+    normal_vector = curve.normal_vector(point, plot=True)
+    binormal_vector = curve.binormal_vector(point, plot=True)
+    print(tangent_vector, normal_vector, binormal_vector)
+    curve.plot(neighborhood=(Pi / 12, Pi / 3))
 
     # test 2
-    curve2 = Curve3D('2*(t-sin(t))', '2*(t-cos(t))', '8*cos(t/2)', (-Pi, Pi))
-    point2 = 0
-    print(curve2.curvature(point2))
-    print(curve2.torsion(point2))
+    # curve2 = Curve3D('2*(t-sin(t))', '2*(t-cos(t))', '8*cos(t/2)', (-Pi, Pi))
+    # point2 = 0
+    # print(curve2.curvature(point2))
+    # print(curve2.torsion(point2))
+
+    # test 3
+    # curve3 = Curve3D('t', 't**3', 't**2+1', (0, 2))
+    # print('')
