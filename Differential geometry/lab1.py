@@ -192,16 +192,17 @@ class Curve3D:
         return torsion
 
     def osculating_circle(self, t: float) -> tuple:
-        """ A
+        """ Osculating circle to the curve at the point t: intersection of osculating sphere and plane.
+            if curve is line -> return (None, None), because there is no osculating circle
 
-        :param t:
-        :return:
+            :param t: given point
+            :return: tuple contains equations for osculating sphere and plane.
         """
         self._validate_t(t)
         kappa = self.curvature(t)
-        # if kappa = 0 -> curve is plane and there is no osculating circle
+        # if kappa = 0 -> curve is line and there is no osculating circle
         if kappa == 0:
-            return (None, None)
+            return None, None
         radius = 1 / kappa
         tangent_vector = self.tangent_vector(t)
         r0 = self._at_point(t)
@@ -209,7 +210,7 @@ class Curve3D:
         x, y, z = symbols('x, y, z')
         osculating_sphere = (x - r_vector[0])**2 + (y - r_vector[1])**2 + (z - r_vector[2])**2 - radius**2
         osculating_plane = self.osculating_plane(t)
-        return (osculating_sphere, osculating_plane)
+        return osculating_sphere, osculating_plane
 
     # ======================================= Helper methods ======================================= #
     @staticmethod
@@ -308,7 +309,12 @@ if __name__ == '__main__':
 
     # # test 3
     curve3 = Curve3D('t', 't**3', 't**2+1', (0, 2))
-    # print('')
-
+    point3 = 1
+    # print('Osculating plane at P({point}): {equation} = 0'.format(point=point3,
+    #                                                               equation=curve3.osculating_plane(point3)))
+    # print('Normal plane at P({point}): {equation} = 0'.format(point=point3,
+    #                                                           equation=curve3.normal_plane(point3)))
+    # print('Reference plane at P({point}): {equation} = 0'.format(point=point3,
+    #                                                              equation=curve3.reference_plane(point3)))
     # test 4
     print(curve2.osculating_circle(point2))
