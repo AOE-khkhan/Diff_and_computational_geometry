@@ -33,8 +33,7 @@ class Curve3D:
         :param param: string that represents the functions' parameter
         """
         assert len(t_range) == 2, 't_range must have len = 2'
-        assert isinstance(t_range[0], (float, int)) and isinstance(t_range[1], (float, int)), \
-            't_range parameters must be numbers'
+        assert all(isinstance(elem, (float, int)) for elem in t_range), 't_range parameters must be numbers'
 
         self._t = symbols(param)
         self._t_lower = float(t_range[0])
@@ -79,8 +78,8 @@ class Curve3D:
         plt.show()
 
     def tangent_vector(self, t: float, plot=False) -> np.array:
-        """ T – Unit vector tangent to the curve, pointing in the direction of motion at point t.
-            T = r'(t) / |r'(t)|
+        """ Unit vector tangent to the curve, pointing in the direction of motion at point t.
+            τ = r'(t) / |r'(t)|
 
             :param t: given point
             :param plot: if true - add tangent unit vector to the plot, when self.plot function is called
@@ -95,8 +94,8 @@ class Curve3D:
         return vector
 
     def normal_vector(self, t: float, plot=False) -> np.array:
-        """ N - Normal unit vector at point t.
-            N = [beta, tau]
+        """ Normal unit vector at point t.
+            ν = [ß, τ]
 
             :param t: given point
             :param plot: if true - add normal unit vector to the plot, when self.plot function is called
@@ -111,8 +110,8 @@ class Curve3D:
         return nu
 
     def binormal_vector(self, t: float, plot=False) -> np.array:
-        """ B - Binormal unit vector at point t, cross product of T and N.
-            B = [r'(t), r''(t)] / |[r'(t), r''(t)]|
+        """ Binormal unit vector at point t, cross product of T and N.
+            ß = [r'(t), r''(t)] / |[r'(t), r''(t)]|
 
             :param t: given point
             :param plot: if true - add binormal unit vector to the plot, when self.plot function is called
@@ -164,9 +163,9 @@ class Curve3D:
         p = self._at_point(t)
         return Curve3D._find_plane(p, tau, beta)
 
-    def curvature(self, t: float):
+    def curvature(self, t: float) -> float:
         """ Curvature at point t – the amount by which a curve deviates from being a straight line.
-            K = |[r'(t), r''(t)]| / |r'(t)|**3
+            k = |[r'(t), r''(t)]| / |r'(t)|**3
 
             :param t: given point
         """
@@ -177,7 +176,7 @@ class Curve3D:
         curvature = Curve3D._module(product) / Curve3D._module(r_der)**3
         return curvature
 
-    def torsion(self, t: float):
+    def torsion(self, t: float) -> float:
         """ The torsion of a curve measures how sharply it is twisting out of the plane of curvature.
             kappa = (r'(t), r''(t), r'''(t)) / |[r'(t), r''(t)]|**2
 
@@ -192,10 +191,27 @@ class Curve3D:
         torsion = numerator / denominator
         return torsion
 
-    def adjacent_circle(self, t: float):
-        self._validate_t(t)
-        pass
+    def osculating_circle(self, t: float) -> tuple:
+        """ A
 
+        :param t:
+        :return:
+        """
+        self._validate_t(t)
+        kappa = self.curvature(t)
+        # if kappa = 0 -> curve is plane and there is no osculating circle
+        if kappa == 0:
+            return (None, None)
+        radius = 1 / kappa
+        tangent_vector = self.tangent_vector(t)
+        r0 = self._at_point(t)
+        r_vector = r0 + radius*tangent_vector
+        x, y, z = symbols('x, y, z')
+        osculating_sphere = (x - r_vector[0])**2 + (y - r_vector[1])**2 + (z - r_vector[2])**2 - radius**2
+        osculating_plane = self.osculating_plane(t)
+        return (osculating_sphere, osculating_plane)
+
+    # ======================================= Helper methods ======================================= #
     @staticmethod
     def _module(vector) -> float:
         """ Helper method to calculate module of given vector of numbers"""
@@ -223,6 +239,7 @@ class Curve3D:
                 float(self._z_func.subs(self._t, t)))
 
     def _validate_t(self, t):
+        """ Helper method to check weather """
         assert self._t_lower <= t <= self._t_upper, 't not in the t_range'
 
     @staticmethod
@@ -274,21 +291,24 @@ def set_axes_equal(ax):
 
 # testing
 if __name__ == '__main__':
-    # test 1
+    # # test 1
     curve = Curve3D('sin(t)', 'cos(t)', 'tan(t)', (0, 5))
     point = Pi / 4
-    tangent_vector = curve.tangent_vector(point, plot=True)
-    normal_vector = curve.normal_vector(point, plot=True)
-    binormal_vector = curve.binormal_vector(point, plot=True)
-    print(tangent_vector, normal_vector, binormal_vector)
-    curve.plot(neighborhood=(Pi / 12, Pi / 3))
+    # tangent_vector = curve.tangent_vector(point, plot=True)
+    # normal_vector = curve.normal_vector(point, plot=True)
+    # binormal_vector = curve.binormal_vector(point, plot=True)
+    # print(tangent_vector, normal_vector, binormal_vector)
+    # curve.plot(neighborhood=(Pi / 12, Pi / 3))
 
-    # test 2
-    # curve2 = Curve3D('2*(t-sin(t))', '2*(t-cos(t))', '8*cos(t/2)', (-Pi, Pi))
-    # point2 = 0
+    # # test 2
+    curve2 = Curve3D('2*(t-sin(t))', '2*(t-cos(t))', '8*cos(t/2)', (-Pi, Pi))
+    point2 = 0
     # print(curve2.curvature(point2))
     # print(curve2.torsion(point2))
 
-    # test 3
-    # curve3 = Curve3D('t', 't**3', 't**2+1', (0, 2))
+    # # test 3
+    curve3 = Curve3D('t', 't**3', 't**2+1', (0, 2))
     # print('')
+
+    # test 4
+    print(curve2.osculating_circle(point2))
