@@ -150,7 +150,7 @@ class GeneralCurve3D:
 
     def binormal_vector(self, p) -> np.ndarray:
         """ Binormal unit vector at point p, cross product of T and N.
-            ß = [r'(t), r''(t)] / |[r'(t), r''(t)]|
+            ß = [r'(p), r''(p)] / |[r'(p), r''(p)]|
 
             :param p: given point
         """
@@ -189,6 +189,35 @@ class GeneralCurve3D:
         tau = self.tangent_vector(p)
         return GeneralCurve3D._find_plane(p, tau, beta)
 
+    def curvature(self, p) -> float:
+        """ Curvature at point p – the amount by which a curve deviates from being a straight line.
+            k = |[r'(t), r''(t)]| / |r'(t)|**3
+
+            :param t: given point
+        """
+        der1, der2 = self.find_derivatives(p)
+        product = np.cross(der1, der2)
+        curvature = np.linalg.norm(product) / np.linalg.norm(der1) ** 3
+        return curvature
+
+    def osculating_circle(self, p) -> tuple:
+        """ Osculating circle to the curve at the point t: intersection of osculating sphere and plane.
+            if curve is line -> return (None, None), because there is no osculating circle
+
+            :param p: given point
+            :return: tuple contains equations for osculating sphere and plane.
+        """
+        kappa = self.curvature(p)
+        # if kappa = 0 -> curve is line and there is no osculating circle
+        if kappa == 0:
+            return None, None
+        radius = 1 / kappa
+        tangent_vector = self.tangent_vector(p)
+        r_vector = p + radius*tangent_vector
+        x, y, z = symbols('x, y, z')
+        osculating_sphere = (x - r_vector[0])**2 + (y - r_vector[1])**2 + (z - r_vector[2])**2 - radius**2
+        osculating_plane = self.osculating_plane(p)
+        return osculating_sphere, osculating_plane
 
     # ======================================= Helper methods ======================================= #
     @staticmethod
@@ -198,8 +227,7 @@ class GeneralCurve3D:
         xyz = np.array([x, y, z])
         matrix = Matrix([xyz - p, vector1, vector2])
         plane = matrix.det()
-        if plane == Zero:
-            raise AssertionError('vector1 and vector2 must be non-collinear')
+        assert plane != Zero, 'vector1 and vector2 must be non-collinear'
         return plane
 
 
