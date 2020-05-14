@@ -19,7 +19,7 @@ from time import time
 
 
 class GeneralCurve3D:
-    def __init__(self, f: str, g: str, params='x y z') -> None:
+    def __init__(self, f: str, g: str, params='x y z', logging=False) -> None:
         """ Create a 3D curve defined by intersection of 2 surfaces
 
         :param f: surface f = F(x, y, z)
@@ -30,6 +30,8 @@ class GeneralCurve3D:
         self._x, self._y, self._z = symbols(params)
         self._der1 = dict()
         self._der2 = dict()
+        self._der3 = dict()
+        self._logging = logging
 
     def __repr__(self):
         """ String representation """
@@ -52,8 +54,8 @@ class GeneralCurve3D:
             :return dr1, dr2 - first and second derivatives of r wrt f, g
         """
         # caching – if calculated before –> just return it
-        if self._der1.get(str(p)) is not None:
-            return self._der1.get(str(p)), self._der2.get(str(p))
+        if self._der1.get(p) is not None:
+            return self._der1.get(p), self._der2.get(p), self._der3.get(p)
 
         subs_dict = {self._x: p[0], self._y: p[1], self._z: p[2]}
         cur_params = [self._x, self._y, self._z]
@@ -69,7 +71,7 @@ class GeneralCurve3D:
 
         f = Function('f')(z)
         g = Function('g')(z)
-        df1, dg1, df2, dg2 = symbols('df1, dg1, df2, dg2')
+        df1, dg1, df2, dg2, df3, dg3 = symbols('df1, dg1, df2, dg2, df3, dg3')
         # ========================== find first derivatives ========================== #
         eq1 = self._f.subs({x: f, y: g}).diff(z).subs(subs_dict)
         eq2 = self._g.subs({x: f, y: g}).diff(z).subs(subs_dict)
@@ -120,10 +122,35 @@ class GeneralCurve3D:
         dr2[correct_order.index(y)] = dg2
         dr2[correct_order.index(z)] = 0
 
+        # ========================= find third derivatives ========================== #
+        eq1 = self._f.subs({x: f, y: g}).diff(z, 3).subs(subs_dict)
+        eq2 = self._g.subs({x: f, y: g}).diff(z, 3).subs(subs_dict)
+
+        def _sub_3(str_eq: str) -> str:
+            str_eq = str_eq.replace('df2', '(' + str(float(df2)) + ')')
+            str_eq = str_eq.replace('dg2', '(' + str(float(dg2)) + ')')
+            str_eq = str_eq.replace(f'Subs(Derivative(f({z}), {z}, {z}, {z}), ({z},), ({subs_dict[z]},))', '(df3)')
+            str_eq = str_eq.replace(f'Subs(Derivative(g({z}), {z}, {z}, {z}), ({z},), ({subs_dict[z]},))', '(dg3)')
+            return str_eq
+
+        str_eq1 = _sub_3(_sub_2(_sub_1(str(eq1))))
+        str_eq2 = _sub_3(_sub_2(_sub_1(str(eq2))))
+
+        eq1 = Eq(parse_expr(str_eq1), 0)
+        eq2 = Eq(parse_expr(str_eq2), 0)
+        roots = solve([eq1, eq2])
+        df3 = roots[df3]
+        dg3 = roots[dg3]
+
+        dr3 = np.array([0, 0, 0])
+        dr3[correct_order.index(x)] = df3
+        dr3[correct_order.index(y)] = dg3
+        dr3[correct_order.index(z)] = 0
         # cache it
-        self._der1[str(p)] = dr1
-        self._der2[str(p)] = dr2
-        return dr1, dr2
+        self._der1[p] = dr1
+        self._der2[p] = dr2
+        self._der3[p] = dr3
+        return dr1, dr2, dr3
 
     def _jacobian(self, x: Symbol, y: Symbol, p: tuple) -> float:
         subs_dict = {self._x: p[0], self._y: p[1], self._z: p[2]}
@@ -141,7 +168,7 @@ class GeneralCurve3D:
 
             :param p: given point
         """
-        der1, der2 = self.find_derivatives(p)
+        der1, der2, der3 = self.find_derivatives(p)
         module = np.linalg.norm(der1)
         vector = der1 / module
         return vector
@@ -152,7 +179,7 @@ class GeneralCurve3D:
 
             :param p: given point
         """
-        der1, der2 = self.find_derivatives(p)
+        der1, der2, der3 = self.find_derivatives(p)
         product = np.cross(der1, der2)
         nu = np.cross(product, der1)
         module = np.linalg.norm(nu)
@@ -165,7 +192,7 @@ class GeneralCurve3D:
 
             :param p: given point
         """
-        der1, der2 = self.find_derivatives(p)
+        der1, der2, der3 = self.find_derivatives(p)
         product = np.cross(der1, der2)
         module = np.linalg.norm(product)
         vector = product / module
@@ -177,7 +204,7 @@ class GeneralCurve3D:
 
             :param p: given point
         """
-        der1, der2 = self.find_derivatives(p)
+        der1, der2, der3 = self.find_derivatives(p)
         return GeneralCurve3D._find_plane(p, der1, der2)
 
     # нормальна
@@ -206,10 +233,23 @@ class GeneralCurve3D:
 
             :param p: given point
         """
-        der1, der2 = self.find_derivatives(p)
+        der1, der2, der3 = self.find_derivatives(p)
         product = np.cross(der1, der2)
         curvature = np.linalg.norm(product) / np.linalg.norm(der1) ** 3
         return curvature
+
+    def torsion(self, p: tuple) -> float:
+        """ The torsion of a curve measures how sharply it is twisting out of the plane of curvature.
+            kappa = (r'(p), r''(p), r'''(p)) / |[r'(p), r''(p)]|**2
+
+            :param p: given point
+        """
+        der1, der2, der3 = self.find_derivatives(p)
+
+        numerator = Matrix([der1, der2, der3]).det()
+        denominator = np.linalg.norm(np.cross(der1, der2)) ** 2
+        torsion = numerator / denominator
+        return torsion
 
     def osculating_circle(self, p: tuple) -> tuple:
         """ Osculating circle to the curve at the point t: intersection of osculating sphere and plane.
@@ -251,6 +291,7 @@ if __name__ == '__main__':
     point = (1, 1, 1)
     curve = GeneralCurve3D('x**2+y**2+z**2-3', 'x**2+y**2-2')
     start = time()
+
     print('For curve {} at point {}:'.format(curve, point))
     print('\ttangent unit vector: {}'.format(curve.tangent_vector(point)))
     print('\tnormal unit vector: {}'.format(curve.normal_vector(point)))
@@ -259,8 +300,10 @@ if __name__ == '__main__':
     print('\tnormal plane: {} = 0'.format(curve.normal_plane(point)))
     print('\treference plane: {} = 0'.format(curve.reference_plane(point)))
     print('\tcurvature: {}'.format(curve.curvature(point)))
+    print('\ttorsion: {}'.format(curve.torsion(point)))
     osc_sphere, osc_plane = curve.osculating_circle(point)
     print('\t# osculating circle <=> intersection of osculating sphere and osculating plane')
     print('\tosculating sphere: {} = 0'.format(osc_sphere))
     print('\tosculating plane: {} = 0'.format(osc_plane))
+
     print('\nTime elapsed:', time() - start)
