@@ -80,7 +80,7 @@ class ParametricCurve3D:
         self._ax.legend()
         set_axes_equal(self._ax)
         if save:
-            plt.savefig(f'{self}.png')
+            plt.savefig('pic.png')
         plt.show()
 
     def tangent_vector(self, t: float, plot=False) -> np.ndarray:
