@@ -317,7 +317,7 @@ class GeneralCurve3D:
 if __name__ == '__main__':
     # time without caching = 1.4064321517944336
     # time with caching = 0.296008825302124
-    # 2.9 times faster
+    # 4.75 times faster
 
     # test
     point = (1, 1, 1)
