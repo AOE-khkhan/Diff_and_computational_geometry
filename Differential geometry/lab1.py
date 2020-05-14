@@ -192,7 +192,11 @@ class ParametricCurve3D:
         r_der = self._get_derivative(t)
         r_der_2 = self._get_derivative(t, 2)
         r_der_3 = self._get_derivative(t, 3)
-        numerator = Matrix([r_der, r_der_2, r_der_3]).det()
+        numerator = Matrix([
+            [r_der[0], r_der[1], r_der[2]],
+            [r_der_2[0], r_der_2[1], r_der_2[2]],
+            [r_der_3[0], r_der_3[1], r_der_3[2]]
+        ]).det()
         denominator = ParametricCurve3D._module(np.cross(r_der, r_der_2)) ** 2
         torsion = numerator / denominator
         return torsion
@@ -250,14 +254,16 @@ class ParametricCurve3D:
         assert self._t_lower <= t <= self._t_upper, 't not in the t_range'
 
     @staticmethod
-    def _find_plane(p, vector1, vector2) -> Expr:
+    def _find_plane(p: tuple, v1: np.ndarray, v2: np.ndarray) -> Expr:
         """ Helper method tp find plane that fits point p and two non-collinear vectors """
         x, y, z = symbols('x, y, z')
-        xyz = np.array([x, y, z])
-        matrix = Matrix([xyz - p, vector1, vector2])
+        matrix = Matrix([
+            [x - p[0], y - p[1], z - p[2]],
+            [v1[0], v1[1], v1[2]],
+            [v2[0], v2[1], v2[2]]
+        ])
         plane = matrix.det()
-        if plane == Zero:
-            raise AssertionError('vector1 and vector2 must be non-collinear')
+        assert plane != Zero, 'vector1 and vector2 must be non-collinear'
         return plane
 
     def _get_derivative(self, t, order=1) -> np.ndarray:

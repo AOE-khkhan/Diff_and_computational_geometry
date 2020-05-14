@@ -110,8 +110,8 @@ class GeneralCurve3D:
         def _sub_1(str_eq: str) -> str:
             str_eq = str_eq.replace(f'f({subs_dict[z]})', '(' + str(subs_dict[x]) + ')')
             str_eq = str_eq.replace(f'g({subs_dict[z]})', '(' + str(subs_dict[y]) + ')')
-            str_eq = str_eq.replace(f'Subs(Derivative(f({z}), {z}), ({z},), ({subs_dict[z]},))', '(df1)')
-            str_eq = str_eq.replace(f'Subs(Derivative(g({z}), {z}), ({z},), ({subs_dict[z]},))', '(dg1)')
+            str_eq = str_eq.replace(f'Subs(Derivative(f({z}), {z}), {z}, {subs_dict[z]})', '(df1)')
+            str_eq = str_eq.replace(f'Subs(Derivative(g({z}), {z}), {z}, {subs_dict[z]})', '(dg1)')
             return str_eq
 
         str_eq1 = _sub_1(str(eq1))
@@ -135,8 +135,8 @@ class GeneralCurve3D:
         def _sub_2(str_eq: str) -> str:
             str_eq = str_eq.replace('df1', '(' + str(float(df1)) + ')')
             str_eq = str_eq.replace('dg1', '(' + str(float(dg1)) + ')')
-            str_eq = str_eq.replace(f'Subs(Derivative(f({z}), {z}, {z}), ({z},), ({subs_dict[z]},))', '(df2)')
-            str_eq = str_eq.replace(f'Subs(Derivative(g({z}), {z}, {z}), ({z},), ({subs_dict[z]},))', '(dg2)')
+            str_eq = str_eq.replace(f'Subs(Derivative(f({z}), ({z}, 2)), {z}, {subs_dict[z]})', '(df2)')
+            str_eq = str_eq.replace(f'Subs(Derivative(g({z}), ({z}, 2)), {z}, {subs_dict[z]})', '(dg2)')
             return str_eq
 
         str_eq1 = _sub_2(_sub_1(str(eq1)))
@@ -160,8 +160,8 @@ class GeneralCurve3D:
         def _sub_3(str_eq: str) -> str:
             str_eq = str_eq.replace('df2', '(' + str(float(df2)) + ')')
             str_eq = str_eq.replace('dg2', '(' + str(float(dg2)) + ')')
-            str_eq = str_eq.replace(f'Subs(Derivative(f({z}), {z}, {z}, {z}), ({z},), ({subs_dict[z]},))', '(df3)')
-            str_eq = str_eq.replace(f'Subs(Derivative(g({z}), {z}, {z}, {z}), ({z},), ({subs_dict[z]},))', '(dg3)')
+            str_eq = str_eq.replace(f'Subs(Derivative(f({z}), ({z}, 3)), {z}, {subs_dict[z]})', '(df3)')
+            str_eq = str_eq.replace(f'Subs(Derivative(g({z}), ({z}, 3)), {z}, {subs_dict[z]})', '(dg3)')
             return str_eq
 
         str_eq1 = _sub_3(_sub_2(_sub_1(str(eq1))))
@@ -278,7 +278,11 @@ class GeneralCurve3D:
         """
         der1, der2, der3 = self.find_derivatives(p)
 
-        numerator = Matrix([der1, der2, der3]).det()
+        numerator = Matrix([
+            [der1[0], der1[1], der1[2]],
+            [der2[0], der2[1], der2[2]],
+            [der3[0], der3[1], der3[2]]
+        ]).det()
         denominator = np.linalg.norm(np.cross(der1, der2)) ** 2
         torsion = numerator / denominator
         return torsion
@@ -304,11 +308,14 @@ class GeneralCurve3D:
 
     # ======================================= Helper methods ======================================= #
     @staticmethod
-    def _find_plane(p: tuple, vector1: np.ndarray, vector2: np.ndarray) -> Expr:
+    def _find_plane(p: tuple, v1: np.ndarray, v2: np.ndarray) -> Expr:
         """ Helper method tp find plane that fits point p and two non-collinear vectors """
         x, y, z = symbols('x, y, z')
-        xyz = np.array([x, y, z])
-        matrix = Matrix([xyz - p, vector1, vector2])
+        matrix = Matrix([
+            [x - p[0], y - p[1], z - p[2]],
+            [v1[0], v1[1], v1[2]],
+            [v2[0], v2[1], v2[2]]
+        ])
         plane = matrix.det()
         assert plane != Zero, 'vector1 and vector2 must be non-collinear'
         return plane
