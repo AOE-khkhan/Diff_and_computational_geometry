@@ -15,6 +15,7 @@ from sympy.core.expr import Expr
 from sympy.matrices import Matrix
 from sympy import diff, Eq, Function, solve
 from sympy.core.numbers import Zero
+from time import time
 
 
 class GeneralCurve3D:
@@ -191,9 +192,9 @@ class GeneralCurve3D:
 
     def curvature(self, p) -> float:
         """ Curvature at point p – the amount by which a curve deviates from being a straight line.
-            k = |[r'(t), r''(t)]| / |r'(t)|**3
+            k = |[r'(p), r''(p)]| / |r'(p)|**3
 
-            :param t: given point
+            :param p: given point
         """
         der1, der2 = self.find_derivatives(p)
         product = np.cross(der1, der2)
@@ -232,7 +233,20 @@ class GeneralCurve3D:
 
 
 if __name__ == '__main__':
+    # test
     point = (1, 1, 1)
-    # r = GeneralCurve3D('x**2+9*y**2-z', '2*x-18*y-z-1')
-    r = GeneralCurve3D('x**2+y**2+z**2-3', 'x**2+y**2-2')
-    print(r.find_derivatives(point))
+    curve = GeneralCurve3D('x**2+y**2+z**2-3', 'x**2+y**2-2')
+    start = time()
+    print('For curve {} at point {}:'.format(curve, point))
+    print('\ttangent unit vector: {}'.format(curve.tangent_vector(point)))
+    print('\tnormal unit vector: {}'.format(curve.normal_vector(point)))
+    print('\tbinormal unit vector: {}'.format(curve.binormal_vector(point)))
+    print('\tosculating plane: {} = 0'.format(curve.osculating_plane(point)))
+    print('\tnormal plane: {} = 0'.format(curve.normal_plane(point)))
+    print('\treference plane: {} = 0'.format(curve.reference_plane(point)))
+    print('\tcurvature: {}'.format(curve.curvature(point)))
+    osc_sphere, osc_plane = curve.osculating_circle(point)
+    print('\t# osculating circle <=> intersection of osculating sphere and osculating plane')
+    print('\tosculating sphere: {} = 0'.format(osc_sphere))
+    print('\tosculating plane: {} = 0'.format(osc_plane))
+    print('\nTime elapsed:', time() - start)
