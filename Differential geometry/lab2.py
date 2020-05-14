@@ -83,7 +83,7 @@ class GeneralCurve3D:
         dg1 = roots[dg1]
 
         correct_order = [self._x, self._y, self._z]
-        dr1 = [0] * 3
+        dr1 = np.array([0, 0, 0])
         dr1[correct_order.index(x)] = df1
         dr1[correct_order.index(y)] = dg1
         dr1[correct_order.index(z)] = 1
@@ -107,7 +107,7 @@ class GeneralCurve3D:
         df2 = roots[df2]
         dg2 = roots[dg2]
 
-        dr2 = [0] * 3
+        dr2 = np.array([0, 0, 0])
         dr2[correct_order.index(x)] = df2
         dr2[correct_order.index(y)] = dg2
         dr2[correct_order.index(z)] = 0
@@ -122,6 +122,17 @@ class GeneralCurve3D:
         )
 
         return matrix.det()
+
+    def tangent_vector(self, p) -> np.ndarray:
+        """ Unit vector tangent to the curve, pointing in the direction of motion at point p.
+            τ = r'(p) / |r'(p)|
+
+            :param p: given point
+        """
+        der1, der2 = self.find_derivatives(p)
+        module = np.linalg.norm(der1)
+        vector = der1 / module
+        return vector
 
 
 if __name__ == '__main__':
