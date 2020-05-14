@@ -24,7 +24,7 @@ EPS = 0.01
 Pi = np.pi
 
 
-class Curve3D:
+class ParametricCurve3D:
     def __init__(self, x_func: str, y_func: str, z_func: str, t_range: tuple, param=PARAM) -> None:
         """ Create a 3d curve with r(t) = (x(t), y(t), z(t)) parametrization.
 
@@ -89,7 +89,7 @@ class Curve3D:
         """
         self._validate_t(t)
         r_der = self._get_derivative(t)
-        module = Curve3D._module(r_der)
+        module = ParametricCurve3D._module(r_der)
         vector = np.array(list(map(lambda x: x / module, r_der)))
         if plot:
             origin = self._at_point(t)
@@ -123,7 +123,7 @@ class Curve3D:
         r_der = self._get_derivative(t)
         r_der_2 = self._get_derivative(t, order=2)
         product = np.cross(r_der, r_der_2)
-        module = Curve3D._module(product)
+        module = ParametricCurve3D._module(product)
         vector = np.array(list(map(lambda x: x / module, product)))
         if plot:
             origin = self._at_point(t)
@@ -140,7 +140,7 @@ class Curve3D:
         r_der = self._get_derivative(t)
         r_der_2 = self._get_derivative(t, order=2)
         p = self._at_point(t)
-        return Curve3D._find_plane(p, r_der, r_der_2)
+        return ParametricCurve3D._find_plane(p, r_der, r_der_2)
 
     # нормальна
     def normal_plane(self, t: float) -> Expr:
@@ -152,7 +152,7 @@ class Curve3D:
         beta = self.binormal_vector(t)
         nu = self.normal_vector(t)
         p = self._at_point(t)
-        return Curve3D._find_plane(p, nu, beta)
+        return ParametricCurve3D._find_plane(p, nu, beta)
 
     # спрямна
     def reference_plane(self, t: float) -> Expr:
@@ -164,7 +164,7 @@ class Curve3D:
         beta = self.binormal_vector(t)
         tau = self.tangent_vector(t)
         p = self._at_point(t)
-        return Curve3D._find_plane(p, tau, beta)
+        return ParametricCurve3D._find_plane(p, tau, beta)
 
     def curvature(self, t: float) -> float:
         """ Curvature at point t – the amount by which a curve deviates from being a straight line.
@@ -176,7 +176,7 @@ class Curve3D:
         r_der = self._get_derivative(t)
         r_der_2 = self._get_derivative(t, 2)
         product = np.cross(r_der, r_der_2)
-        curvature = Curve3D._module(product) / Curve3D._module(r_der)**3
+        curvature = ParametricCurve3D._module(product) / ParametricCurve3D._module(r_der) ** 3
         return curvature
 
     def torsion(self, t: float) -> float:
@@ -190,7 +190,7 @@ class Curve3D:
         r_der_2 = self._get_derivative(t, 2)
         r_der_3 = self._get_derivative(t, 3)
         numerator = Matrix([r_der, r_der_2, r_der_3]).det()
-        denominator = Curve3D._module(np.cross(r_der, r_der_2))**2
+        denominator = ParametricCurve3D._module(np.cross(r_der, r_der_2)) ** 2
         torsion = numerator / denominator
         return torsion
 
@@ -296,7 +296,7 @@ def set_axes_equal(ax):
 # testing
 if __name__ == '__main__':
     # test 1
-    curve = Curve3D('sin(t)', 'cos(t)', 'tan(t)', (0, 5))
+    curve = ParametricCurve3D('sin(t)', 'cos(t)', 'tan(t)', (0, 5))
     point = Pi / 4
     print('For curve {} at point {}:'.format(curve, point))
     print('\ttangent unit vector: {}'.format(curve.tangent_vector(point, plot=True)))
@@ -305,7 +305,7 @@ if __name__ == '__main__':
     curve.plot(neighborhood=(Pi / 12, Pi / 3))
 
     # test 2
-    curve2 = Curve3D('2*(t-sin(t))', '2*(t-cos(t))', '8*cos(t/2)', (-Pi, Pi))
+    curve2 = ParametricCurve3D('2*(t-sin(t))', '2*(t-cos(t))', '8*cos(t/2)', (-Pi, Pi))
     point2 = 0
     print('\nFor curve {} at point {}:'.format(curve2, point2))
     print('\tcurvature: {}'.format(curve2.curvature(point2)))
@@ -316,7 +316,7 @@ if __name__ == '__main__':
     print('\tosculating plane: {} = 0'.format(osc_plane))
 
     # test 3
-    curve3 = Curve3D('t', 't**3', 't**2+1', (0, 2))
+    curve3 = ParametricCurve3D('t', 't**3', 't**2+1', (0, 2))
     point3 = 1
     print('\nFor curve {} at point {}:'.format(curve3, point3))
     print('\tosculating plane: {} = 0'.format(curve3.osculating_plane(point3)))
