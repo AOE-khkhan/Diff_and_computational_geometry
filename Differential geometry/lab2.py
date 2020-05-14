@@ -28,6 +28,8 @@ class GeneralCurve3D:
         self._f = parse_expr(f)
         self._g = parse_expr(g)
         self._x, self._y, self._z = symbols(params)
+        self._der1 = dict()
+        self._der2 = dict()
 
     def __repr__(self):
         """ String representation """
@@ -49,6 +51,10 @@ class GeneralCurve3D:
             :param p: point consist of 3 numbers
             :return dr1, dr2 - first and second derivatives of r wrt f, g
         """
+        # caching – if calculated before –> just return it
+        if self._der1.get(str(p)) is not None:
+            return self._der1.get(str(p)), self._der2.get(str(p))
+
         subs_dict = {self._x: p[0], self._y: p[1], self._z: p[2]}
         cur_params = [self._x, self._y, self._z]
         x, y, z = cur_params
@@ -113,6 +119,10 @@ class GeneralCurve3D:
         dr2[correct_order.index(x)] = df2
         dr2[correct_order.index(y)] = dg2
         dr2[correct_order.index(z)] = 0
+
+        # cache it
+        self._der1[str(p)] = dr1
+        self._der2[str(p)] = dr2
         return dr1, dr2
 
     def _jacobian(self, x: Symbol, y: Symbol, p: tuple) -> float:
@@ -125,7 +135,7 @@ class GeneralCurve3D:
 
         return matrix.det()
 
-    def tangent_vector(self, p) -> np.ndarray:
+    def tangent_vector(self, p: tuple) -> np.ndarray:
         """ Unit vector tangent to the curve, pointing in the direction of motion at point p.
             τ = r'(p) / |r'(p)|
 
@@ -136,7 +146,7 @@ class GeneralCurve3D:
         vector = der1 / module
         return vector
 
-    def normal_vector(self, p) -> np.ndarray:
+    def normal_vector(self, p: tuple) -> np.ndarray:
         """ Normal unit vector at point p.
             ν = [ß, τ]
 
@@ -149,7 +159,7 @@ class GeneralCurve3D:
         vector = nu / module
         return vector
 
-    def binormal_vector(self, p) -> np.ndarray:
+    def binormal_vector(self, p: tuple) -> np.ndarray:
         """ Binormal unit vector at point p, cross product of T and N.
             ß = [r'(p), r''(p)] / |[r'(p), r''(p)]|
 
@@ -162,7 +172,7 @@ class GeneralCurve3D:
         return vector
 
     # стична
-    def osculating_plane(self, p) -> Expr:
+    def osculating_plane(self, p: tuple) -> Expr:
         """ Tangent plane to the curve at point p.
 
             :param p: given point
@@ -171,7 +181,7 @@ class GeneralCurve3D:
         return GeneralCurve3D._find_plane(p, der1, der2)
 
     # нормальна
-    def normal_plane(self, p) -> Expr:
+    def normal_plane(self, p: tuple) -> Expr:
         """ Normal plane at point p.
 
             :param p: given point
@@ -181,7 +191,7 @@ class GeneralCurve3D:
         return GeneralCurve3D._find_plane(p, nu, beta)
 
     # спрямна
-    def reference_plane(self, p) -> Expr:
+    def reference_plane(self, p: tuple) -> Expr:
         """ Binormal plane at point p.
 
             :param p: given point
@@ -190,7 +200,7 @@ class GeneralCurve3D:
         tau = self.tangent_vector(p)
         return GeneralCurve3D._find_plane(p, tau, beta)
 
-    def curvature(self, p) -> float:
+    def curvature(self, p: tuple) -> float:
         """ Curvature at point p – the amount by which a curve deviates from being a straight line.
             k = |[r'(p), r''(p)]| / |r'(p)|**3
 
@@ -201,7 +211,7 @@ class GeneralCurve3D:
         curvature = np.linalg.norm(product) / np.linalg.norm(der1) ** 3
         return curvature
 
-    def osculating_circle(self, p) -> tuple:
+    def osculating_circle(self, p: tuple) -> tuple:
         """ Osculating circle to the curve at the point t: intersection of osculating sphere and plane.
             if curve is line -> return (None, None), because there is no osculating circle
 
@@ -222,7 +232,7 @@ class GeneralCurve3D:
 
     # ======================================= Helper methods ======================================= #
     @staticmethod
-    def _find_plane(p, vector1, vector2) -> Expr:
+    def _find_plane(p: tuple, vector1: np.ndarray, vector2: np.ndarray) -> Expr:
         """ Helper method tp find plane that fits point p and two non-collinear vectors """
         x, y, z = symbols('x, y, z')
         xyz = np.array([x, y, z])
@@ -233,6 +243,10 @@ class GeneralCurve3D:
 
 
 if __name__ == '__main__':
+    # time without caching = 0.4286801815032959
+    # time with caching = 0.14731216430664062
+    # 2.9 times faster
+
     # test
     point = (1, 1, 1)
     curve = GeneralCurve3D('x**2+y**2+z**2-3', 'x**2+y**2-2')
