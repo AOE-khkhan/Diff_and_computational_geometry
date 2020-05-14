@@ -14,6 +14,7 @@ from sympy.core.symbol import symbols, Symbol
 from sympy.core.expr import Expr
 from sympy.matrices import Matrix
 from sympy import diff, Eq, Function, solve
+from sympy.core.numbers import Zero
 
 
 class GeneralCurve3D:
@@ -133,6 +134,73 @@ class GeneralCurve3D:
         module = np.linalg.norm(der1)
         vector = der1 / module
         return vector
+
+    def normal_vector(self, p) -> np.ndarray:
+        """ Normal unit vector at point p.
+            ν = [ß, τ]
+
+            :param p: given point
+        """
+        der1, der2 = self.find_derivatives(p)
+        product = np.cross(der1, der2)
+        nu = np.cross(product, der1)
+        module = np.linalg.norm(nu)
+        vector = nu / module
+        return vector
+
+    def binormal_vector(self, p) -> np.ndarray:
+        """ Binormal unit vector at point p, cross product of T and N.
+            ß = [r'(t), r''(t)] / |[r'(t), r''(t)]|
+
+            :param p: given point
+        """
+        der1, der2 = self.find_derivatives(p)
+        product = np.cross(der1, der2)
+        module = np.linalg.norm(product)
+        vector = product / module
+        return vector
+
+    # стична
+    def osculating_plane(self, p) -> Expr:
+        """ Tangent plane to the curve at point p.
+
+            :param p: given point
+        """
+        der1, der2 = self.find_derivatives(p)
+        return GeneralCurve3D._find_plane(p, der1, der2)
+
+    # нормальна
+    def normal_plane(self, p) -> Expr:
+        """ Normal plane at point p.
+
+            :param p: given point
+        """
+        beta = self.binormal_vector(p)
+        nu = self.normal_vector(p)
+        return GeneralCurve3D._find_plane(p, nu, beta)
+
+    # спрямна
+    def reference_plane(self, p) -> Expr:
+        """ Binormal plane at point p.
+
+            :param p: given point
+        """
+        beta = self.binormal_vector(p)
+        tau = self.tangent_vector(p)
+        return GeneralCurve3D._find_plane(p, tau, beta)
+
+
+    # ======================================= Helper methods ======================================= #
+    @staticmethod
+    def _find_plane(p, vector1, vector2) -> Expr:
+        """ Helper method tp find plane that fits point p and two non-collinear vectors """
+        x, y, z = symbols('x, y, z')
+        xyz = np.array([x, y, z])
+        matrix = Matrix([xyz - p, vector1, vector2])
+        plane = matrix.det()
+        if plane == Zero:
+            raise AssertionError('vector1 and vector2 must be non-collinear')
+        return plane
 
 
 if __name__ == '__main__':
