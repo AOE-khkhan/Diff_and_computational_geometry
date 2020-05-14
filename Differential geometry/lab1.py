@@ -63,6 +63,7 @@ class ParametricCurve3D:
 
             :param neighborhood: if given, plot in the neighborhood of the point
             :param num: number of points in linspace, e.g. bigger num -> detailed plot
+            :param save: if true -> save plot as png picture to local directory
         """
         if not neighborhood:
             t = np.linspace(self._t_lower, self._t_upper, num)
@@ -78,9 +79,9 @@ class ParametricCurve3D:
         self._ax.plot3D(x, y, z, label=str(self))
         self._ax.legend()
         set_axes_equal(self._ax)
-        plt.show()
         if save:
-            plt.savefig(f'{self}.png', format="svg")
+            plt.savefig(f'{self}.png')
+        plt.show()
 
     def tangent_vector(self, t: float, plot=False) -> np.ndarray:
         """ Unit vector tangent to the curve, pointing in the direction of motion at point t.
