@@ -1,20 +1,20 @@
-# Завдання лабораторних робіт
+# Differential geometry labs
 
-## Лабораторна робота №1
+## Lab №1
 
-Створити модуль, який за регулярною параметризацією кривої:
+Create a python script, that by a parametrization of a curve must:
 
-- візуалізує криву;
-- для заданого значення параметра обчислює орти дотичної, головної нормалі та бінормалі;
-- для заданого значення параметра знаходить рівняння ребер і граней тригранника Френе (візуалізація тригранника на кривій буде додатковим плюсом);
-- для заданого значення параметра обчислює кривину і скрут;
-- для заданого значення параметра знаходить стичне коло.
+- visualize a curve;
+- for given value of parameter find unit tangent, normal and binormal vectors (visualize would be +);
+- for given value of parameter find normal, osculating and reference planes equations;
+- for given value of parameter calculate curvature and torsion;
+- for given value of parameter find osculating circle.
 
-## Лабораторна робота №2
+## Lab №2
 
-Створити модуль, який за загальними рівняннями та точкою кривої з використанням алгоритму застосування теореми про неявну функцію:
+Create a python script, that by a general curve equation (intersection of two surfaces) must:
 
-- обчислює орти дотичної, головної нормалі та бінормалі кривої в точці;
-- знаходить рівняння ребер і граней тригранника Френе кривої в точці;
-- обчислює кривину і скрут кривої в точці;
-- знаходить стичне коло кривої в точці.
+- for given point find unit tangent, normal and binormal vectors;
+- for given point find normal, osculating and reference planes equations;
+- for given point calculate curvature and torsion;
+- for given point find osculating circle.

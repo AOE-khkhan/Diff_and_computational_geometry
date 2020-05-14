@@ -58,7 +58,7 @@ class ParametricCurve3D:
     def __str__(self):
         return 'r({t}) = ({x}, {y}, {z})'.format(t=self._t, x=self._x_func, y=self._y_func, z=self._z_func)
 
-    def plot(self, neighborhood=None, num=1000) -> None:
+    def plot(self, neighborhood=None, num=1000, save=False) -> None:
         """ Plot the curve on graphic.
 
             :param neighborhood: if given, plot in the neighborhood of the point
@@ -79,6 +79,8 @@ class ParametricCurve3D:
         self._ax.legend()
         set_axes_equal(self._ax)
         plt.show()
+        if save:
+            plt.savefig(f'{self}.png', format="svg")
 
     def tangent_vector(self, t: float, plot=False) -> np.ndarray:
         """ Unit vector tangent to the curve, pointing in the direction of motion at point t.
@@ -302,7 +304,7 @@ if __name__ == '__main__':
     print('\ttangent unit vector: {}'.format(curve.tangent_vector(point, plot=True)))
     print('\tnormal unit vector: {}'.format(curve.normal_vector(point, plot=True)))
     print('\tbinormal unit vector: {}'.format(curve.binormal_vector(point, plot=True)))
-    curve.plot(neighborhood=(Pi / 12, Pi / 3))
+    curve.plot(neighborhood=(-2*Pi / 7, 3*Pi / 7))
 
     # test 2
     curve2 = ParametricCurve3D('2*(t-sin(t))', '2*(t-cos(t))', '8*cos(t/2)', (-Pi, Pi))
