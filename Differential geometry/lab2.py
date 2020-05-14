@@ -321,7 +321,7 @@ if __name__ == '__main__':
 
     # test
     point = (1, 1, 1)
-    curve = GeneralCurve3D('x**2+y**2+z**2-3', 'x**2+y**2-2', logging=False, caching=True)
+    curve = GeneralCurve3D('x**2+y**2+z**2-3', 'x**2+y**2-2', logging=True, caching=True)
     start = time()
 
     print('For curve\n{}\nat point {}:'.format(curve, point))
