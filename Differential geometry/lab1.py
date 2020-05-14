@@ -3,7 +3,7 @@
 
 """
 Created by Roman Polishchenko at 11.05.2020
-3 course, comp math
+3rd course, computer mathematics
 Taras Shevchenko National University of Kyiv
 email: roma.vinn@gmail.com
 """
