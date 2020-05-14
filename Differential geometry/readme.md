@@ -19,7 +19,7 @@ Create a python script, that by a general curve equation (intersection of two su
 - for given point calculate curvature and torsion;
 - for given point find osculating circle.
 
-## Examples
+## Output examples
 - Example of curve visualization in lab 1:
     ![pic1](pic1.png)
     
