@@ -19,7 +19,7 @@ from time import time
 
 
 class GeneralCurve3D:
-    def __init__(self, f: str, g: str, params='x y z', logging=False) -> None:
+    def __init__(self, f: str, g: str, params='x y z', logging=False, caching=True) -> None:
         """ Create a 3D curve defined by intersection of 2 surfaces
 
         :param f: surface f = F(x, y, z)
@@ -32,42 +32,73 @@ class GeneralCurve3D:
         self._der2 = dict()
         self._der3 = dict()
         self._logging = logging
+        self._caching = caching
 
     def __repr__(self):
         """ String representation """
-        return "F: {}\nG: {}".format(self._f, self._g)
+        return "F: {},\nG: {},".format(self._f, self._g)
 
     def __str__(self):
         """ String representation """
-        return "F: {}\nG: {}".format(self._f, self._g)
+        return "F: {},\nG: {},".format(self._f, self._g)
 
     def find_derivatives(self, p: tuple) -> tuple:
         """ Check conditions of implicit function theorem and return r'(p), r''(p)
                                 (теореми про неявну функцію)
 
-            1) We can't check, so we suppose that f, g є C**oo
+            1) We can't check, so we suppose that f, g є C**inf
             2) Check if F(p) = G(p) = 0
             3) Find such variable z, so d(f, g) / d(x, y) at point p != 0
                 (check all possible variables)
 
             :param p: point consist of 3 numbers
-            :return dr1, dr2 - first and second derivatives of r wrt f, g
+            :return dr1, dr2, dr3 - first, second and third derivatives of r wrt f, g
         """
         # caching – if calculated before –> just return it
-        if self._der1.get(p) is not None:
-            return self._der1.get(p), self._der2.get(p), self._der3.get(p)
+        if self._caching:
+            if self._der1.get(p) is not None:
+                return self._der1.get(p), self._der2.get(p), self._der3.get(p)
 
+        # ========================== check conditions =============================== #
         subs_dict = {self._x: p[0], self._y: p[1], self._z: p[2]}
+
+        if self._logging:
+            print('\n# ===== Checking conditions of implicit function theorem ===== #')
+            print('1) Suppose, that F, G є C^inf')
+
+        if self._f.subs(subs_dict) != 0:
+            if self._logging:
+                msg = f'2) F({p}) = {self._f} = {self._f.subs(subs_dict)} != 0'
+                print(msg)
+                raise AssertionError(msg)
+        elif self._g.subs(subs_dict) != 0:
+            if self._logging:
+                msg = f'2) G({p}) = {self._g} = {self._g.subs(subs_dict)} != 0'
+                print(msg)
+                raise AssertionError(msg)
+        else:
+            if self._logging:
+                print(f'2) F({p}) = G({p}) = 0')
+
         cur_params = [self._x, self._y, self._z]
         x, y, z = cur_params
         found = False
+        if self._logging:
+            print('3) Checking jacobians\n')
         for _ in range(3):
             x, y, z = cur_params
+            if self._logging:
+                print(f"\tif variable {z} is dependent:")
+
             if self._jacobian(x, y, p) != 0:
                 found = True
                 break
             cur_params = cur_params[-1:] + cur_params[:2]
         assert found is True, 'there is no not-null jacobian'
+
+        if self._logging:
+            print('# =================== Condition checked! ===================== #\n')
+            self._logging = False
 
         f = Function('f')(z)
         g = Function('g')(z)
@@ -159,7 +190,8 @@ class GeneralCurve3D:
             [[diff(self._f, x).subs(subs_dict), diff(self._f, y).subs(subs_dict)],
              [diff(self._g, x).subs(subs_dict), diff(self._g, y).subs(subs_dict)]]
         )
-
+        if self._logging:
+            print(f'Jacobian d(f, g) / d({x}, {y}) at point {p} is |{matrix}| = {matrix.det()}')
         return matrix.det()
 
     def tangent_vector(self, p: tuple) -> np.ndarray:
@@ -283,16 +315,16 @@ class GeneralCurve3D:
 
 
 if __name__ == '__main__':
-    # time without caching = 0.4286801815032959
-    # time with caching = 0.14731216430664062
+    # time without caching = 1.4064321517944336
+    # time with caching = 0.296008825302124
     # 2.9 times faster
 
     # test
     point = (1, 1, 1)
-    curve = GeneralCurve3D('x**2+y**2+z**2-3', 'x**2+y**2-2')
+    curve = GeneralCurve3D('x**2+y**2+z**2-3', 'x**2+y**2-2', logging=False, caching=True)
     start = time()
 
-    print('For curve {} at point {}:'.format(curve, point))
+    print('For curve\n{}\nat point {}:'.format(curve, point))
     print('\ttangent unit vector: {}'.format(curve.tangent_vector(point)))
     print('\tnormal unit vector: {}'.format(curve.normal_vector(point)))
     print('\tbinormal unit vector: {}'.format(curve.binormal_vector(point)))
